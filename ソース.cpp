@@ -697,7 +697,7 @@ int Total3_main() {
 	auto ZO = ZeroOne_Enc(NR,Z);
 	std::cout << "End ZeroOne" << std::endl;
 	auto BS = BlockSort_Enc(ZO);
-	Show(std::get<0>(BS));
+	Show(std::get<0>(BS),true);
 	auto LZ = Lzw_Enc(std::get<0>(BS),Dic);
 	Show(LZ,true);
 
