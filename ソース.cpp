@@ -658,7 +658,14 @@ int Total_main2() {
 	return 0;
 }
 int Total3_main() {
-	auto D = MakeVector(1024,1);
+	//auto D = MakeVector(1024,1);
+	auto D = LoadFromFile("M.bmp");
+
+	if (!D.size()) {
+		std::cout << "Abooooooooon!!" << std::endl;
+		
+		return -1;
+	}
 
 	std::cout << "Start Process" << std::endl;
 

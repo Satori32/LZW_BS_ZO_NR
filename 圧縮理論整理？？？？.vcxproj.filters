@@ -41,5 +41,8 @@
     <Image Include="..\DivNライザー？？\D.bmp">
       <Filter>リソース ファイル</Filter>
     </Image>
+    <Image Include="M.bmp">
+      <Filter>リソース ファイル</Filter>
+    </Image>
   </ItemGroup>
 </Project>
