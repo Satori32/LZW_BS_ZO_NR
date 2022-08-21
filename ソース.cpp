@@ -140,14 +140,14 @@ Bytes MakeVector5(std::size_t N, std::intmax_t Min, std::intmax_t Max, std::uint
 	return R;
 }
 
-Words Lzw_Enc(const Bytes& D) {
+Words Lzw_Enc(const Bytes& D, std::size_t DC = 256) {
 
 	Data Di;
 	Bytes V;
 	Words R;
 
 	//for (std::size_t i = 0; i <= std::numeric_limits<Bytes::value_type>::max(); i++) {
-	for (std::size_t i = 0; i < DicCount; i++) 
+	for (std::size_t i = 0; i <DC; i++) 
 	{
 		V.push_back(i);
 		Di.push_back(V);
@@ -188,14 +188,14 @@ Words Lzw_Enc(const Bytes& D) {
 	return R;
 }
 
-Bytes Lzw_Dec(const Words& D) {// , const Data& In) {
+Bytes Lzw_Dec(const Words& D, std::size_t DC=256) {// , const Data& In) {
 
 	Bytes V;
 	Data Di;
 	Bytes R;
 
 	//for (std::size_t i = 0; i <= std::numeric_limits<Bytes::value_type>::max(); i++) {
-	for (std::size_t i = 0; i < DicCount; i++) {
+	for (std::size_t i = 0; i < DC; i++) {
 		V.push_back(i);
 		Di.push_back({ V });
 		V.pop_back();
@@ -692,12 +692,12 @@ int Total3_main() {
 	std::cout << "End ZeroOne" << std::endl;
 	auto BS = BlockSort_Enc(ZO);
 	Show(std::get<0>(BS));
-	auto LZ = Lzw_Enc(std::get<0>(BS));
+	auto LZ = Lzw_Enc(std::get<0>(BS),ZeroOneBits);
 	Show(LZ,true);
 
 	std::cout << "End Encode" << std::endl;
 	std::cout << "Start Decode" << std::endl;
-	auto LZD = Lzw_Dec(LZ);
+	auto LZD = Lzw_Dec(LZ,ZeroOneBits);
 
 	auto BSD = BlockSort_Dec(LZD, std::get<1>(BS));
 
