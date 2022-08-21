@@ -63,7 +63,24 @@ Bytes LoadFromFile(const std::string& Name) {
 
 	return { it,End };
 }
+bool WriteToFile(const Bytes& In, std::string Name) {
+	std::ofstream ofs(Name);
 
+	if (!ofs.is_open()) { return false; }
+
+	ofs.write((const char*)In.data(), In.size() * sizeof(Bytes::value_type));
+
+	return true;
+}
+bool WriteToFile(const Words& In, std::string Name) {
+	std::ofstream ofs(Name);
+
+	if (!ofs.is_open()) { return false; }
+
+	ofs.write((const char*)In.data(), In.size() * sizeof(Words::value_type));
+
+	return true;
+}
 
 Bytes MakeVector(std::size_t L, unsigned int S = 0) {
 	Bytes R;
@@ -659,7 +676,7 @@ int Total_main2() {
 }
 int Total3_main() {
 	//auto D = MakeVector(1024,1);
-	auto D = LoadFromFile("M.bmp");
+	auto D = LoadFromFile("out.lzw");
 
 	if (!D.size()) {
 		std::cout << "Abooooooooon!!" << std::endl;
@@ -692,6 +709,8 @@ int Total3_main() {
 
 	if (D == NRD) {
 		std::cout << std::endl << "Good!" << std::endl;
+
+		//WriteToFile(LZ,"out2.lzw");
 	}
 	else {
 		std::cout << std::endl << "Bad!" << std::endl;
