@@ -19,8 +19,9 @@ typedef std::vector<Bytes> Data;
 typedef std::tuple<Bytes, std::size_t> BData;
 typedef std::vector<BData> VStack;
 
-static const std::uint16_t DicCount = 16;
+static const std::uint16_t NRDivider = 16;
 static const std::size_t ZeroOneBits = 4;
+static const std::uint16_t DicCount = 2;
 
 bool Show(const Bytes& In,bool F = false) {
 
@@ -675,8 +676,12 @@ int Total_main2() {
 	return 0;
 }
 int Total3_main() {
-	//auto D = MakeVector(1024,1);
-	auto D = LoadFromFile("out.lzw");
+	auto D = MakeVector(1024,1);
+	//auto D = LoadFromFile("out.lzw");
+
+	auto N = NRDivider;
+	auto Z = ZeroOneBits;
+	auto Dic = DicCount;
 
 	if (!D.size()) {
 		std::cout << "Abooooooooon!!" << std::endl;
@@ -686,24 +691,24 @@ int Total3_main() {
 
 	std::cout << "Start Process" << std::endl;
 
-	auto NR = NRizer_Enc(D, DicCount);//DicCount is Grobal Variable.
+	auto NR = NRizer_Enc(D, N);//DicCount is Grobal Variable.
 	std::cout << "End NRizer" << std::endl;
-	auto ZO = ZeroOne_Enc(NR,ZeroOneBits);//ZeroOneBits is grobal variable.
+	auto ZO = ZeroOne_Enc(NR,Z);//ZeroOneBits is grobal variable.
 	std::cout << "End ZeroOne" << std::endl;
 	auto BS = BlockSort_Enc(ZO);
 	Show(std::get<0>(BS));
-	auto LZ = Lzw_Enc(std::get<0>(BS),ZeroOneBits);
+	auto LZ = Lzw_Enc(std::get<0>(BS),Dic);
 	Show(LZ,true);
 
 	std::cout << "End Encode" << std::endl;
 	std::cout << "Start Decode" << std::endl;
-	auto LZD = Lzw_Dec(LZ,ZeroOneBits);
+	auto LZD = Lzw_Dec(LZ, Dic);
 
 	auto BSD = BlockSort_Dec(LZD, std::get<1>(BS));
 
-	auto ZOD = ZeroOne_Dec(BSD,ZeroOneBits);
+	auto ZOD = ZeroOne_Dec(BSD,Z);
 
-	auto NRD = NRizer_Dec(ZOD, DicCount);
+	auto NRD = NRizer_Dec(ZOD, N);
 
 		std::cout << "End Decode" << std::endl;
 
