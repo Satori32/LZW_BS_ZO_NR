@@ -679,6 +679,7 @@ int Total3_main() {
 	auto D = MakeVector(1024,1);
 	//auto D = LoadFromFile("out.lzw");
 
+	//some grobal variable.
 	auto N = NRDivider;
 	auto Z = ZeroOneBits;
 	auto Dic = DicCount;
@@ -691,9 +692,9 @@ int Total3_main() {
 
 	std::cout << "Start Process" << std::endl;
 
-	auto NR = NRizer_Enc(D, N);//DicCount is Grobal Variable.
+	auto NR = NRizer_Enc(D, N);
 	std::cout << "End NRizer" << std::endl;
-	auto ZO = ZeroOne_Enc(NR,Z);//ZeroOneBits is grobal variable.
+	auto ZO = ZeroOne_Enc(NR,Z);
 	std::cout << "End ZeroOne" << std::endl;
 	auto BS = BlockSort_Enc(ZO);
 	Show(std::get<0>(BS));
