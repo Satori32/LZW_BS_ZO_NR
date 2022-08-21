@@ -20,6 +20,7 @@ typedef std::tuple<Bytes, std::size_t> BData;
 typedef std::vector<BData> VStack;
 
 static const std::uint16_t DicCount = 16;
+static const std::size_t ZeroOneBits = 4;
 
 bool Show(const Bytes& In,bool F = false) {
 
@@ -333,6 +334,9 @@ Bytes BlockSort_Dec(const Bytes& D, std::size_t N) {///,const DType& O,const Dat
 
 	return R;
 }
+Bytes BlockSort_Dec(const BData& In) {
+	return BlockSort_Dec(std::get<0>(In), std::get<1>(In));
+}
 
 Bytes MakeCacao() {
 	Bytes R = { 'c','a','c','a','o' };
@@ -391,11 +395,11 @@ int BlockSort_main() {
 
 }
 
-Bytes ZeroOne_Enc(const Bytes& N) {
+Bytes ZeroOne_Enc(const Bytes& N,const std::size_t& B) {
 	Bytes R;
 
 	for (auto& o : N) {
-		for (std::size_t i = 0; i < std::numeric_limits<Bytes::value_type>::digits; i++) {
+		for (std::size_t i = 0; i < B; i++) {
 			auto X = (o & (1 << i)) > 0 ? 1 : 0;
 			R.push_back(X);
 		}
@@ -403,14 +407,14 @@ Bytes ZeroOne_Enc(const Bytes& N) {
 
 	return R;
 }
-Bytes ZeroOne_Dec(const Bytes& N) {
+Bytes ZeroOne_Dec(const Bytes& N,std::size_t B) {
 	Bytes R;
 	std::uint8_t X = 0;;
 	for (std::size_t i = 0; i < N.size(); i++) {
 
-		X |= N[i] << (i % (std::numeric_limits<Bytes::value_type>::digits));
+		X |= N[i] << (i % B);
 
-		if ((i % (std::numeric_limits<Bytes::value_type>::digits)) == std::numeric_limits<Bytes::value_type>::digits - 1) {
+		if ((i % (B)) == (B - 1)) {
 			R.push_back(X);
 			X = 0;
 		}
@@ -425,10 +429,10 @@ int ZeroOne_main() {
 
 	Show(V);
 
-	Bytes E = ZeroOne_Enc(V);
+	Bytes E = ZeroOne_Enc(V,ZeroOneBits);//ZeroOneBits is Grobal Variable.
 
 	Show(E);
-	Bytes D = ZeroOne_Dec(E);
+	Bytes D = ZeroOne_Dec(E,ZeroOneBits);
 
 	Show(D);
 
@@ -444,7 +448,7 @@ int ZeroOne_main() {
 
 
 }
-Bytes NRizer_enc(const Bytes& In, std::uint8_t S) {
+Bytes NRizer_Enc(const Bytes& In, std::uint8_t S) {
 	Bytes R;
 
 	for (auto& o : In) {
@@ -455,7 +459,7 @@ Bytes NRizer_enc(const Bytes& In, std::uint8_t S) {
 	return R;
 }
 
-Bytes NRizer_dec(const Bytes& In, std::uint8_t S) {
+Bytes NRizer_Dec(const Bytes& In, std::uint8_t S) {
 	Bytes R;
 	bool F = true;
 	for (auto& o : In) {
@@ -478,9 +482,9 @@ int NRizer_main() {
 
 	Show(D);
 
-	Bytes E = NRizer_enc(D, N);
+	Bytes E = NRizer_Enc(D, N);
 	Show(E);
-	Bytes X = NRizer_dec(E, N);
+	Bytes X = NRizer_Dec(E, N);
 	Show(X);
 	if (D == X) {
 		std::cout << "good" << std::endl;
@@ -535,7 +539,7 @@ int Total_main() {
 	std::uint8_t N = DicCount;
 	std::size_t L = 1;
 
-	Bytes Z = NRizer_enc(D, N);
+	Bytes Z = NRizer_Enc(D, N);
 	Show(Z);
 
 	std::cout << "End NRizer!" << std::endl;
@@ -568,7 +572,7 @@ int Total_main() {
 		BD = BlockSort_Dec(BD, std::get<1>(St.back()));
 		St.pop_back();
 	}
-	Bytes ZD = NRizer_dec(BD, N);
+	Bytes ZD = NRizer_Dec(BD, N);
 	std::cout << "--End--" << std::endl << std::endl;
 	/**/
 	if (D == ZD) {
@@ -604,7 +608,7 @@ int Total_main2() {
 	std::uint8_t N = DicCount;
 	std::size_t L = 1;
 
-	Bytes Z = NRizer_enc(D, N);
+	Bytes Z = NRizer_Enc(D, N);
 	Show(Z);
 
 	std::cout << "End NRizer!" << std::endl;
@@ -641,7 +645,7 @@ int Total_main2() {
 	/**/
 
 	//Bytes ZD = NRizer_dec(BD, N);
-	Bytes ZD = NRizer_dec(LD, N);
+	Bytes ZD = NRizer_Dec(LD, N);
 	std::cout << "--End--" << std::endl << std::endl;
 	/**/
 	if (D == ZD) {
@@ -653,11 +657,48 @@ int Total_main2() {
 	/**/
 	return 0;
 }
+int Total3_main() {
+	auto D = MakeVector(1024,1);
+
+	std::cout << "Start Process" << std::endl;
+
+	auto NR = NRizer_Enc(D, DicCount);//DicCount is Grobal Variable.
+	std::cout << "End NRizer" << std::endl;
+	auto ZO = ZeroOne_Enc(NR,ZeroOneBits);//ZeroOneBits is grobal variable.
+	std::cout << "End ZeroOne" << std::endl;
+	auto BS = BlockSort_Enc(ZO);
+	Show(std::get<0>(BS));
+	auto LZ = Lzw_Enc(std::get<0>(BS));
+	Show(LZ,true);
+
+	std::cout << "End Encode" << std::endl;
+	std::cout << "Start Decode" << std::endl;
+	auto LZD = Lzw_Dec(LZ);
+
+	auto BSD = BlockSort_Dec(LZD, std::get<1>(BS));
+
+	auto ZOD = ZeroOne_Dec(BSD,ZeroOneBits);
+
+	auto NRD = NRizer_Dec(ZOD, DicCount);
+
+		std::cout << "End Decode" << std::endl;
+
+	if (D == NRD) {
+		std::cout << std::endl << "Good!" << std::endl;
+	}
+	else {
+		std::cout << std::endl << "Bad!" << std::endl;
+	}
+	return 0;
+}
 int main() {
 	//Lzw_main();
 //	BlockSort_main();
 	//ZeroOne_main();
 	//NRizer_main();
-	Total_main();
+	//Total_main();
 	//Total_main2();
+	Total3_main();
+
+	return 0;
 }
