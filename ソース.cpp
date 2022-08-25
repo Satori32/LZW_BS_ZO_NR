@@ -723,6 +723,61 @@ int Total3_main() {
 	}
 	return 0;
 }
+
+int Total4_main() {
+	auto D = MakeVector(1024,1);
+	//auto D = LoadFromFile("out.lzw");
+
+	//some grobal variable.
+	//auto N = NRDivider;
+	//auto Z = ZeroOneBits;
+	//auto Dic = DicCount;
+
+	auto Z = 8;
+	auto Dic = 256;
+
+	if (!D.size()) {
+		std::cout << "Abooooooooon!!" << std::endl;
+		
+		return -1;
+	}
+
+	std::cout << "Start Process" << std::endl;
+
+	//auto NR = NRizer_Enc(D, N);
+	//std::cout << "End NRizer" << std::endl;
+	//auto ZO = ZeroOne_Enc(NR,Z);
+	auto ZO = ZeroOne_Enc(D,Z);
+	Show(ZO, true);
+	std::cout << "End ZeroOne" << std::endl;
+	auto BS = BlockSort_Enc(ZO);
+	Show(std::get<0>(BS),true);
+	auto LZ = Lzw_Enc(std::get<0>(BS),Dic);
+	Show(LZ,true);
+
+	std::cout << "End Encode" << std::endl;
+	std::cout << "Start Decode" << std::endl;
+	auto LZD = Lzw_Dec(LZ, Dic);
+
+	auto BSD = BlockSort_Dec(LZD, std::get<1>(BS));
+
+	auto ZOD = ZeroOne_Dec(BSD,Z);
+
+	//auto NRD = NRizer_Dec(ZOD, N);
+
+	std::cout << "End Decode" << std::endl;
+
+	//if (D == NRD) {
+	if (D == ZOD){
+		std::cout << std::endl << "Good!" << std::endl;
+
+		//WriteToFile(LZ,"out2.lzw");
+	}
+	else {
+		std::cout << std::endl << "Bad!" << std::endl;
+	}
+	return 0;
+}
 int main() {
 	//Lzw_main();
 //	BlockSort_main();
@@ -730,7 +785,8 @@ int main() {
 	//NRizer_main();
 	//Total_main();
 	//Total_main2();
-	Total3_main();
+	//Total3_main();
+	Total4_main();
 
 	return 0;
 }
