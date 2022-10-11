@@ -82,7 +82,16 @@ bool WriteToFile(const Words& In, std::string Name) {
 
 	return true;
 }
+Bytes MakeVectorII(std::size_t L, unsigned int S = 0) {
+	Bytes R;
+	std::minstd_rand mr(S);
+	std::uniform_int_distribution<int> ui(0, 255);
+	for (std::size_t i = 0; i < L; i++) {
+		R.push_back(ui(mr));
+	}
 
+	return R;
+}
 Bytes MakeVector(std::size_t L, unsigned int S = 0) {
 	Bytes R;
 	std::mt19937 mt(S);
@@ -155,7 +164,7 @@ Words Lzw_Enc(const Bytes& D, std::size_t DC = 256) {
 		V.pop_back();
 	}
 	//R.push_back(0xfffe);//clear code.
-	//R.push_back(0xffff);//stop code.
+	R.push_back(0xffff);//stop code.
 
 	for (std::size_t i = 0; i < D.size(); i++) {
 		V.push_back(D[i]);
@@ -188,7 +197,40 @@ Words Lzw_Enc(const Bytes& D, std::size_t DC = 256) {
 
 	return R;
 }
+Words Lzw_EncII(Bytes D, std::size_t DC = 256) {
+	Data Dc;
+	Bytes  X;
+	Bytes Y;
+	Words R;
 
+
+	for (std::size_t i = 0; i < DC; i++) {
+		Bytes Y;
+		Y.push_back(i);
+		Dc.push_back(Y);
+	}
+
+	for (std::size_t i = 0; i < D.size(); i++) {
+		Y = X;
+		X.push_back(D[i]);
+		auto it = std::find(Dc.begin(), Dc.end(), X);
+		if (it == Dc.end()) {
+			auto it2 = std::find(Dc.begin(), Dc.end(), Y);
+			auto L = std::distance(Dc.begin(), it2);
+			R.push_back(L);
+			Dc.push_back(X);
+			X.clear();
+			Y.clear();
+			i--;
+		}
+	}
+	if (X.size()) {
+		auto it = std::find(Dc.begin(), Dc.end(), X);
+		auto L = std::distance(Dc.begin(), it);
+		R.push_back(L);
+	}
+	return R;
+}
 Bytes Lzw_Dec(const Words& D, std::size_t DC=256) {// , const Data& In) {
 
 	Bytes V;
@@ -329,6 +371,30 @@ BData BlockSort_Enc(const Bytes& In) {
 
 	return { R,L };
 
+}
+BData BlockSort_EncII(Bytes In) {//consume memory
+	std::vector<BData> D;
+	for (std::size_t i = 0; i < In.size(); i++) {
+		D.push_back({ In,i });
+		std::rotate(In.begin(), In.begin() + 1, In.end());
+	}
+
+	std::stable_sort(D.begin(), D.end(), [&](auto& A, auto& B) { return std::get<0>(A) < std::get<0>(B); });
+
+	std::size_t X = 0;
+	Bytes R;
+	for (std::size_t i = 0; i < In.size(); i++) {
+		if (std::get<1>(D[i]) == 0) {
+			X = i;
+			break;
+		}
+	}
+	for (std::size_t i = 0; i < In.size(); i++) {
+		//R.push_back(std::get<0>(D[(X + i) % D.size()])[0]);
+		R.push_back(std::get<0>(D[i]).back());
+	}
+
+	return { R,X };
 }
 
 Bytes BlockSort_Dec(const Bytes& D, std::size_t N) {///,const DType& O,const Data& A) {
@@ -725,7 +791,7 @@ int Total3_main() {
 }
 
 int Total4_main() {
-	auto D = MakeVector(1024,1);
+	auto D = MakeVector(1024,3);
 	//auto D = LoadFromFile("out.lzw");
 
 	//some grobal variable.
@@ -734,7 +800,7 @@ int Total4_main() {
 	//auto Dic = DicCount;
 
 	auto Z = 8;
-	auto Dic = 256;
+	auto Dic = 2;
 
 	if (!D.size()) {
 		std::cout << "Abooooooooon!!" << std::endl;
@@ -778,6 +844,116 @@ int Total4_main() {
 	}
 	return 0;
 }
+int Total5_main() {
+	auto D = MakeVectorII(1024,3);
+	//auto D = MakeVector(1024,3);
+	//auto D = LoadFromFile("out.lzw");
+
+	//some grobal variable.
+	//auto N = NRDivider;
+	//auto Z = ZeroOneBits;
+	//auto Dic = DicCount;
+
+	auto Z = 8;
+	auto Dic = 2;
+
+	if (!D.size()) {
+		std::cout << "Abooooooooon!!" << std::endl;
+		
+		return -1;
+	}
+
+	std::cout << "Start Process" << std::endl;
+
+	//auto NR = NRizer_Enc(D, N);
+	//std::cout << "End NRizer" << std::endl;
+	//auto ZO = ZeroOne_Enc(NR,Z);
+	auto ZO = ZeroOne_Enc(D,Z);
+	Show(ZO, true);
+	std::cout << "End ZeroOne" << std::endl;
+	auto BS = BlockSort_EncII(ZO);
+	Show(std::get<0>(BS),true);
+	auto LZ = Lzw_Enc(std::get<0>(BS),Dic);
+	Show(LZ,true);
+
+	std::cout << "End Encode" << std::endl;
+	std::cout << "Start Decode" << std::endl;
+	auto LZD = Lzw_Dec(LZ, Dic);
+
+	auto BSD = BlockSort_Dec(LZD, std::get<1>(BS));
+
+	auto ZOD = ZeroOne_Dec(BSD,Z);
+
+	//auto NRD = NRizer_Dec(ZOD, N);
+
+	std::cout << "End Decode" << std::endl;
+
+	//if (D == NRD) {
+	if (D == ZOD){
+		std::cout << std::endl << "Good!" << std::endl;
+
+		//WriteToFile(LZ,"out2.lzw");
+	}
+	else {
+		std::cout << std::endl << "Bad!" << std::endl;
+	}
+	return 0;
+}
+int Total6_main() {
+	//auto D = MakeVectorII(1024,3);
+	//auto D = MakeVector(1024,3);
+	auto D = LoadFromFile("out.lzw");
+
+	//some grobal variable.
+	//auto N = NRDivider;
+	//auto Z = ZeroOneBits;
+	//auto Dic = DicCount;
+
+	auto Z = 8;
+	auto Dic = 2;
+
+	if (!D.size()) {
+		std::cout << "Abooooooooon!!" << std::endl;
+		
+		return -1;
+	}
+
+	std::cout << "Start Process" << std::endl;
+
+	//auto NR = NRizer_Enc(D, N);
+	//std::cout << "End NRizer" << std::endl;
+	//auto ZO = ZeroOne_Enc(NR,Z);
+	auto ZO = ZeroOne_Enc(D,Z);
+	Show(ZO, true);
+	std::cout << "End ZeroOne" << std::endl;
+	auto BS = BlockSort_EncII(ZO);
+	Show(std::get<0>(BS),true);
+	auto LZ = Lzw_EncII(std::get<0>(BS),Dic);
+	Show(LZ,true);
+
+	std::cout << "End Encode" << std::endl;
+	std::cout << "Start Decode" << std::endl;
+	auto LZD = Lzw_Dec(LZ, Dic);
+
+	auto BSD = BlockSort_Dec(LZD, std::get<1>(BS));
+
+	auto ZOD = ZeroOne_Dec(BSD,Z);
+
+	//auto NRD = NRizer_Dec(ZOD, N);
+
+	std::cout << "End Decode" << std::endl;
+
+	//if (D == NRD) {
+	if (D == ZOD){
+		std::cout << std::endl << "Good!" << std::endl;
+
+		//WriteToFile(LZ,"out2.lzw");
+	}
+	else {
+		std::cout << std::endl << "Bad!" << std::endl;
+	}
+	return 0;
+}
 int main() {
 	//Lzw_main();
 //	BlockSort_main();
@@ -786,7 +962,8 @@ int main() {
 	//Total_main();
 	//Total_main2();
 	//Total3_main();
-	Total4_main();
-
+	//Total4_main();
+	//Total5_main();
+	Total6_main();
 	return 0;
 }
