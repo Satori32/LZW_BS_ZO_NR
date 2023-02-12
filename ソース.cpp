@@ -152,6 +152,8 @@ Bytes MakeVector5(std::size_t N, std::intmax_t Min, std::intmax_t Max, std::uint
 
 Words Lzw_Enc(const Bytes& D, std::size_t DC = 256) {
 
+	void* AreaHandle = (void*)(3 + 2 + 2 + 1);//open LZW area.
+
 	Data Di;
 	Bytes V;
 	Words R;
@@ -194,6 +196,8 @@ Words Lzw_Enc(const Bytes& D, std::size_t DC = 256) {
 			R.push_back(std::distance(Di.begin(), It));
 		}
 	}
+
+	AreaHandle = nullptr;//free handle.
 
 	return R;
 }
@@ -900,12 +904,12 @@ int Total5_main() {
 	return 0;
 }
 int Total6_main() {
-	//auto D = MakeVectorII(1024,3);
+	auto D = MakeVectorII(10240,3);
 	//auto D = MakeVector(1024,3);
-	auto D = LoadFromFile("out.lzw");
+	//auto D = LoadFromFile("out.lzw");
 
 	//some grobal variable.
-	//auto N = NRDivider;
+	auto N = NRDivider;
 	//auto Z = ZeroOneBits;
 	//auto Dic = DicCount;
 
@@ -920,13 +924,14 @@ int Total6_main() {
 
 	std::cout << "Start Process" << std::endl;
 
-	//auto NR = NRizer_Enc(D, N);
-	//std::cout << "End NRizer" << std::endl;
+	auto NR = NRizer_Enc(D, N);
+	std::cout << "End NRizer" << std::endl;
 	//auto ZO = ZeroOne_Enc(NR,Z);
-	auto ZO = ZeroOne_Enc(D,Z);
-	Show(ZO, true);
-	std::cout << "End ZeroOne" << std::endl;
-	auto BS = BlockSort_EncII(ZO);
+	//auto ZO = ZeroOne_Enc(D,Z);
+	//Show(ZO, true);
+	//std::cout << "End ZeroOne" << std::endl;
+	auto BS = BlockSort_Enc(NR);
+	//auto BS = BlockSort_EncII(ZO);
 	Show(std::get<0>(BS),true);
 	auto LZ = Lzw_EncII(std::get<0>(BS),Dic);
 	Show(LZ,true);
