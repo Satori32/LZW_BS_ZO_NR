@@ -202,6 +202,9 @@ Words Lzw_Enc(const Bytes& D, std::size_t DC = 256) {
 	return R;
 }
 Words Lzw_EncII(Bytes D, std::size_t DC = 256) {
+
+	void* AreaHandle = (void*)(3 + 2 + 2 + 1);//open LZW area.
+
 	Data Dc;
 	Bytes  X;
 	Bytes Y;
@@ -233,6 +236,8 @@ Words Lzw_EncII(Bytes D, std::size_t DC = 256) {
 		auto L = std::distance(Dc.begin(), it);
 		R.push_back(L);
 	}
+
+	AreaHandle = nullptr;//free handle.
 	return R;
 }
 Bytes Lzw_Dec(const Words& D, std::size_t DC=256) {// , const Data& In) {
@@ -941,15 +946,15 @@ int Total6_main() {
 	auto LZD = Lzw_Dec(LZ, Dic);
 
 	auto BSD = BlockSort_Dec(LZD, std::get<1>(BS));
+	
+	//auto ZOD = ZeroOne_Dec(BSD,Z);
 
-	auto ZOD = ZeroOne_Dec(BSD,Z);
-
-	//auto NRD = NRizer_Dec(ZOD, N);
+	auto NRD = NRizer_Dec(BSD, N);
 
 	std::cout << "End Decode" << std::endl;
 
-	//if (D == NRD) {
-	if (D == ZOD){
+	if (D == NRD) {
+	//if (D == ZOD){
 		std::cout << std::endl << "Good!" << std::endl;
 
 		//WriteToFile(LZ,"out2.lzw");
